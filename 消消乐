@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>饺子消消乐</title>
+    <style>
+        body { font-family: Arial; text-align: center; background: #f0f0f0; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(6, 60px); gap: 5px; margin: 20px auto; width: 390px; }
+        .cell { width: 60px; height: 60px; border-radius: 8px; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 24px; background: white; }
+        .cell.selected { border-color: red; background: #ffe6e6; }
+        button { padding: 10px 20px; background: #ff6b6b; color: white; border: none; border-radius: 5px; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h2>饺子消消乐 🥟</h2>
+    <div>分数: <span id="score">0</span></div>
+    <div id="grid" class="grid"></div>
+    <button onclick="initGame()">重新开始</button>
+
+    <script>
+        // 使用Emoji表情代替图片
+        const EMOJIS = ['😀', '😂', '🥰', '😎', '🤔', '😡'];
+        
+        let grid = [], score = 0, selected = null;
+        
+        function initGame() {
+            grid = []; score = 0; selected = null;
+            document.getElementById('score').textContent = score;
+            const gridEl = document.getElementById('grid');
+            gridEl.innerHTML = '';
+            
+            for (let i = 0; i < 6; i++) {
+                grid[i] = [];
+                for (let j = 0; j < 6; j++) {
+                    const type = Math.floor(Math.random() * EMOJIS.length);
+                    grid[i][j] = type;
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.textContent = EMOJIS[type];
+                    cell.onclick = () => handleClick(i, j, cell);
+                    gridEl.appendChild(cell);
+                }
+            }
+        }
+        
+        function handleClick(i, j, cell) {
+            if (!selected) {
+                selected = {i, j, cell};
+                cell.classList.add('selected');
+                return;
+            }
+            
+            if (selected.i === i && selected.j === j) {
+                selected.cell.classList.remove('selected');
+                selected = null;
+                return;
+            }
+            
+            const isAdjacent = (Math.abs(selected.i - i) === 1 && selected.j === j) || 
+                             (Math.abs(selected.j - j) === 1 && selected.i === i);
+            
+            if (isAdjacent && grid[selected.i][selected.j] === grid[i][j]) {
+                selected.cell.classList.remove('selected');
+                removeCells([selected, {i, j, cell}]);
+                selected = null;
+            } else {
+                selected.cell.classList.remove('selected');
+                selected = {i, j, cell};
+                cell.classList.add('selected');
+            }
+        }
+        
+        function removeCells(cells) {
+            score += 20;
+            document.getElementById('score').textContent = score;
+            cells.forEach(({i, j, cell}) => {
+                grid[i][j] = null;
+                cell.textContent = '';
+                cell.style.background = '#f0f0f0';
+            });
+            setTimeout(() => {
+                dropCells();
+                fillCells();
+            }, 300);
+        }
+        
+        function dropCells() {
+            for (let j = 0; j < 6; j++) {
+                let empty = 0;
+                for (let i = 5; i >= 0; i--) {
+                    if (grid[i][j] === null) empty++;
+                    else if (empty > 0) {
+                        grid[i + empty][j] = grid[i][j];
+                        grid[i][j] = null;
+                    }
+                }
+            }
+        }
+        
+        function fillCells() {
+            const cells = document.querySelectorAll('.cell');
+            let index = 0;
+            for (let j = 0; j < 6; j++) {
+                for (let i = 0; i < 6; i++) {
+                    if (grid[i][j] === null) {
+                        const type = Math.floor(Math.random() * EMOJIS.length);
+                        grid[i][j] = type;
+                        cells[index].textContent = EMOJIS[type];
+                        cells[index].style.background = 'white';
+                    }
+                    index++;
+                }
+            }
+        }
+        
+        initGame();
+    </script>
+</body>
+</html>
